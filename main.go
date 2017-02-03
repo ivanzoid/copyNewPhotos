@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
+
+	"github.com/ivanzoid/copyNewPhotos/config"
 )
 
 type Dir struct {
@@ -25,13 +27,21 @@ type Dirs []Dir
 
 func main() {
 
+	cfg, _ := config.Load()
+
+	if cfg == nil || len(cfg.PhotoPath) == 0 {
+		log.Fatal("Please add photoPath to .copyNewPhotos/config.json")
+	}
+
 	mountPoints, err := exfatMountPoints()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	localPhotosRootDir := localPhotosRootDir()
-	localPhotoDirs := localPhotoDirs(localPhotosRootDir)
+	year := time.Now().Format("2006")
+	photosDir := path.Join(cfg.PhotoPath, year)
+
+	localPhotoDirs := localPhotoDirs(photosDir)
 
 	for _, mountPoint := range mountPoints {
 		dcimPath := path.Join(mountPoint, "DCIM")
@@ -44,7 +54,7 @@ func main() {
 
 		for _, flashDir := range flashDirs {
 			if !localPhotoDirs.hasSameLocalDir(flashDir) {
-				copyPhotoDirToDir(flashDir, localPhotosRootDir)
+				copyPhotoDirToDir(flashDir, photosDir)
 			} else {
 				fmt.Printf("%s: already copied\n", flashDir.Name)
 			}
@@ -123,13 +133,8 @@ func subfolders(folder string) Dirs {
 	return dirs
 }
 
-func localPhotosRootDir() string {
-	year := time.Now().Format("2006")
-	photosRootDir := path.Join("/Volumes/BigData/Photo/", year)
-	return photosRootDir
-}
-
 func localPhotoDirs(localPhotosRootDir string) Dirs {
+
 	subfolders := subfolders(localPhotosRootDir)
 
 	for index := range subfolders {
