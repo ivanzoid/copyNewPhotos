@@ -125,7 +125,7 @@ func subfolders(folder string) Dirs {
 			fmt.Fprintf(os.Stderr, "Can't stat dir \"%s\": %v\n", dir.Path, err)
 			continue
 		}
-		dir.CreateTime = t.BirthTime().Format("06-01-02")
+		dir.CreateTime = t.BirthTime().Format("01-02")
 		dir.Name = file.Name()
 
 		dirs = append(dirs, dir)
