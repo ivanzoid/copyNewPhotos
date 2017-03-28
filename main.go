@@ -52,7 +52,8 @@ func main() {
 
 		flashDirs := subfolders(dcimPath)
 
-		for _, flashDir := range flashDirs {
+		for i := len(flashDirs) - 1; i >= 0; i-- {
+			flashDir := flashDirs[i]
 			if !localPhotoDirs.hasSameLocalDir(flashDir) {
 				copyPhotoDirToDir(flashDir, photosDir)
 			} else {
