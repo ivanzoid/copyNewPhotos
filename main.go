@@ -52,10 +52,16 @@ func main() {
 
 		flashDirs := subfolders(dcimPath)
 
+		count := 0
+
 		for i := len(flashDirs) - 1; i >= 0; i-- {
+			if count >= 1 {
+				break
+			}
 			flashDir := flashDirs[i]
 			if !localPhotoDirs.hasSameLocalDir(flashDir) {
 				copyPhotoDirToDir(flashDir, photosDir)
+				count++
 			} else {
 				fmt.Printf("%s: already copied\n", flashDir.Name)
 			}
