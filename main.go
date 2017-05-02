@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,6 +18,10 @@ import (
 	"github.com/ivanzoid/copyNewPhotos/config"
 )
 
+var (
+	flagFolderCount int
+)
+
 type Dir struct {
 	Path       string
 	Name       string
@@ -25,7 +30,13 @@ type Dir struct {
 
 type Dirs []Dir
 
+func init() {
+	flag.IntVar(&flagFolderCount, "c", 1, "Count of folders to copy")
+}
+
 func main() {
+
+	flag.Parse()
 
 	cfg, _ := config.Load()
 
@@ -55,7 +66,7 @@ func main() {
 		count := 0
 
 		for i := len(flashDirs) - 1; i >= 0; i-- {
-			if count >= 1 {
+			if count >= flagFolderCount {
 				break
 			}
 			flashDir := flashDirs[i]
