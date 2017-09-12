@@ -20,18 +20,21 @@ import (
 
 var (
 	flagFolderCount int
+	flagList        bool
 )
 
 type Dir struct {
-	Path       string
-	Name       string
-	CreateTime string
+	Path             string
+	Name             string
+	CreateTimeString string
+	CreateTime       time.Time
 }
 
 type Dirs []Dir
 
 func init() {
 	flag.IntVar(&flagFolderCount, "c", 1, "Count of folders to copy")
+	flag.BoolVar(&flagList, "ls", false, "Use to list directories")
 }
 
 func main() {
@@ -63,20 +66,32 @@ func main() {
 
 		flashDirs := subfolders(dcimPath)
 
-		count := 0
-
-		for i := len(flashDirs) - 1; i >= 0; i-- {
-			if count >= flagFolderCount {
-				break
-			}
-			flashDir := flashDirs[i]
-			if !localPhotoDirs.hasSameLocalDir(flashDir) {
-				copyPhotoDirToDir(flashDir, photosDir)
-				count++
-			} else {
-				fmt.Printf("%s: already copied\n", flashDir.Name)
-			}
+		if flagList {
+			listFlashDirs(flashDirs)
+		} else {
+			copyFlashDirs(flashDirs, localPhotoDirs, photosDir)
 		}
+
+	}
+}
+func copyFlashDirs(flashDirs Dirs, localPhotoDirs Dirs, photosDir string) {
+	count := 0
+	for i := len(flashDirs) - 1; i >= 0; i-- {
+		if count >= flagFolderCount {
+			break
+		}
+		flashDir := flashDirs[i]
+		if !localPhotoDirs.hasSameLocalDir(flashDir) {
+			copyPhotoDirToDir(flashDir, photosDir)
+			count++
+		} else {
+			fmt.Printf("%s: already copied\n", flashDir.Name)
+		}
+	}
+}
+func listFlashDirs(dirs Dirs) {
+	for _, dir := range dirs {
+		fmt.Printf("file://%v (%v)\n", dir.Path, dir.CreateTime)
 	}
 }
 
@@ -142,7 +157,8 @@ func subfolders(folder string) Dirs {
 			fmt.Fprintf(os.Stderr, "Can't stat dir \"%s\": %v\n", dir.Path, err)
 			continue
 		}
-		dir.CreateTime = t.BirthTime().Format("01-02")
+		dir.CreateTime = t.BirthTime()
+		dir.CreateTimeString = t.BirthTime().Format("01-02")
 		dir.Name = file.Name()
 
 		dirs = append(dirs, dir)
@@ -160,7 +176,7 @@ func localPhotoDirs(localPhotosRootDir string) Dirs {
 		if len(subfolder.Name) < 8 {
 			continue
 		}
-		subfolder.CreateTime = subfolder.Name[:8]
+		subfolder.CreateTimeString = subfolder.Name[:8]
 	}
 
 	return subfolders
@@ -168,7 +184,7 @@ func localPhotoDirs(localPhotosRootDir string) Dirs {
 
 func (dirs Dirs) hasSameLocalDir(flashDir Dir) bool {
 	for _, localDir := range dirs {
-		if localDir.CreateTime == flashDir.CreateTime {
+		if localDir.CreateTimeString == flashDir.CreateTimeString {
 			return true
 		}
 	}
@@ -182,7 +198,7 @@ func copyPhotoDirToDir(src Dir, dstParent string) {
 		return
 	}
 
-	localDirName := src.CreateTime
+	localDirName := src.CreateTimeString
 	localDirPath := path.Join(dstParent, localDirName)
 
 	err = os.Mkdir(localDirPath, 0777)
